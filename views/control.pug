@@ -1,0 +1,26 @@
+extends layout
+block head
+	link(href="/control.css",rel="stylesheet")
+block body
+	h2 Control Panel
+	p.control-content Playing nothing.
+	p.control-vtt No subtitles.
+	p.control-state Stopped
+	p.control-pos 00:00:00.0/00:00:00.0
+	div.control-buttons
+		button.control-stop Stop
+		button.control-pauseplay Play
+	h3 Set Position
+	p Input position in the form hh:mm:ss.ms.
+	input.control-pos-input(type="text",placeholder="00:00:00.0")
+	button.control-setpos Set
+	h3 Set Content
+	p This is relative to the data folder. For example, if the file is "polarexpress.mp4" in the folder "videos", and videos is the data folder, you'd just write "polarexpress.mp4"
+	input.control-url-input(type="text",placeholder="File")
+	button.control-seturl Set
+	p You can also set a subtitle file. These are SRT files relative to the video (so "polarexpress.srt", for example).
+	input.control-vtt-input(type="text",placeholder="Subtitle.srt")
+	button.control-setvtt Set
+	h3 Errors
+	div.errors
+	script(src="/js/control.js")

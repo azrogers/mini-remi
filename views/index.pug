@@ -1,0 +1,10 @@
+extends layout
+block head
+	script(src="/js/libs/plyr.polyfilled.min.js")
+	link(href="/plyr.css", rel="stylesheet")
+	link(href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",rel="stylesheet")
+	link(href="/style.css",rel="stylesheet")
+block body
+	script= "var baseUrl = '" + config.get("data_url") + "';"
+	video.sync-video(id="sync-video")
+	script(src="/js/player.js")

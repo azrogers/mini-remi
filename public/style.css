@@ -1,0 +1,43 @@
+html,body
+{
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	background: black;
+	overflow: hidden;
+}
+.sync-video,.plyr,.plyr__video-wrapper,.plyr__video-wrapper video
+{
+	width: 100%;
+	height: 100%;
+}
+.subs-button
+{
+	display: block;
+	position: absolute;
+	top: 0;
+	right: 0;
+	color: white;
+	padding: 5px;
+	opacity: 0.5;
+	z-index: 999;
+}
+.subs-button:hover
+{
+	cursor: pointer;
+	opacity: 0.75;
+}
+/*::cue
+{
+	background: rgba(0, 0, 0, 0.2);
+	text-shadow: -1px -1px 5px #000000;
+}
+video::-webkit-media-text-track-display
+{
+	opacity: 0.8;
+	font-family: "Open Sans", sans-serif;
+	font-size: 50%;
+	overflow: visible;
+	background: none;
+}*/
