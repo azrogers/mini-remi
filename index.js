@@ -6,13 +6,28 @@ const nconf = require("nconf");
 const fs = require("fs");
 const path = require("path");
 const subtitle = require("subtitle");
+const sharedSession = require("express-socket.io-session");
 
 const sync = require("./sync");
 
 nconf.file("config.json");
 
+const sessions = require("express-session")({ 
+	secret: nconf.get("session_secret"), 
+	resave: false, 
+	saveUninitialized: false,
+	name: "remi.session"
+});
+
 app.set("view engine", "pug");
 app.use(express.static("public"));
+app.use(sessions);
+
+app.use("/auth", require("./auth")(nconf));
+
+io.use(sharedSession(sessions, {
+	autoSave: true
+}));
 
 // converts an srt in the data folder to a vtt file for html5 video
 app.get("/subs/:sub.vtt", (req, res) => {
@@ -32,6 +47,20 @@ app.get("/subs/:sub.vtt", (req, res) => {
 })
 
 app.get("/control", (req, res) => {
+	// not logged in
+	if(!req.session.discordId)
+	{
+		res.redirect(nconf.get("root_url") + "auth/login");
+		return;
+	}
+
+	// not admin
+	if(nconf.get("admins").indexOf(req.session.discordId) == -1)
+	{
+		res.send("not allowed");
+		return;
+	}
+
 	res.render("control");
 });
 

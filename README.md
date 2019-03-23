@@ -12,6 +12,8 @@ Your config file should look like this:
 	// the url to the video files relative to the main page
 	"data_url": "/",
 	// your youtube data api v3 key
-	"youtube_api_key": "<key>"
+	"youtube_api_key": "<key>",
+	// a secure random string used for sessions
+	"session_secret": "str"
 }
 ```

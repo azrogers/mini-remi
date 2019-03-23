@@ -110,8 +110,26 @@ function handleFile(socket, msg, forceUpdate)
 // register listeners for control panel
 function registerListeners(socket, nconf, forceUpdate)
 {
+	var session = socket.handshake.session;
+	var isAdmin = session.discordId == null ? false : nconf.get("admins").indexOf(session.discordId) != -1;
+
+	function registerListener(name, cb)
+	{
+		socket.on(name, (msg) => {
+			if(!isAdmin)
+			{
+				socket.emit("control.error", { msg: "Not logged in. Refresh the page. "});
+				return;
+			}
+
+			cb(msg);
+		})
+	}
+
 	// sets the state of the currently playing media
-	socket.on("control.state", (msg) => {
+	registerListener("control.state", (msg) => {
+		if(!isAdmin) return;
+
 		var newState = msg.state;
 		if(newState != "stopped" && newState != "playing" && newState != "paused")
 		{
@@ -139,7 +157,9 @@ function registerListeners(socket, nconf, forceUpdate)
 	});
 
 	// sets the url of the currently playing media
-	socket.on("control.set_url", (msg) => {
+	registerListener("control.set_url", (msg) => {
+		if(!isAdmin) return;
+		
 		var file = msg.file || "";
 		if(YOUTUBE_REGEX.test(file))
 		{
@@ -152,14 +172,18 @@ function registerListeners(socket, nconf, forceUpdate)
 	});
 
 	// sets the vtt file of the currently playing media
-	socket.on("control.set_vtt", (msg) => {
+	registerListener("control.set_vtt", (msg) => {
+		if(!isAdmin) return;
+		
 		var vtt = msg.vtt || "";
 		mediaInfo.vtt = vtt;
 		forceUpdate();
 	});
 
 	// sets the position of the currently playing media
-	socket.on("control.set_pos", (msg) => {
+	registerListener("control.set_pos", (msg) => {
+		if(!isAdmin) return;
+		
 		var pos = msg.pos || 0;
 		if(pos > mediaInfo.duration)
 		{
@@ -179,6 +203,7 @@ module.exports = function(io, nconf, cb) {
 		type: "key",
 		key: nconf.get("youtube_api_key")
 	});
+
 	db.get("media:info", (err, value) => {
 		if(err && !err.notFound)
 		{
