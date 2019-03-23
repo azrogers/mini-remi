@@ -16,7 +16,17 @@ var options = {
 	settings: ["captions"],
 	clickToPlay: false,
 	disableContextMenu: false,
-	iconUrl: "/plyr.svg"
+	iconUrl: "/plyr.svg",
+	youtube: {
+		autoplay: "0",
+		controls: "0",
+		disablekb: "1",
+		enablejsapi: "1",
+		fs: "0",
+		modestbranding: "1",
+		playsinline: "1",
+		rel: "0"
+	}
 };
 
 var player = new Plyr("#sync-video", options);
@@ -30,13 +40,17 @@ player.on("ready", function() {
 	}
 });
 
-function setSource(newSource, newVtt)
+function setSource(type, newSource, newVtt)
 {
+	var source = { src: baseUrl + newSource };
+	if(type == "youtube")
+	{
+		source = { src: newSource, provider: "youtube" };
+	}
+
 	player.source = {
 		type: "video",
-		sources: [
-			{ src: newSource }
-		],
+		sources: [ source ],
 		tracks: [
 			{
 				kind: "captions",
@@ -54,13 +68,16 @@ function updateVideo(oldMedia, newMedia)
 		oldMedia.url != newMedia.url ||
 		oldMedia.vtt != newMedia.vtt)
 	{
-		setSource(baseUrl + newMedia.url, "/subs/" + newMedia.vtt);
+		setSource(newMedia.type, newMedia.url, "/subs/" + newMedia.vtt);
 	}
 
 	var diff = Math.abs(newMedia.pos - player.currentTime);
 	if(diff > WIGGLE_ROOM)
 	{
+		// for some reason it mutes if you seek???
+		var wasMuted = player.muted;
 		player.currentTime = newMedia.pos;
+		player.muted = wasMuted;
 	}
 
 	if(newMedia.state == "playing" && !player.playing)

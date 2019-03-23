@@ -3,14 +3,19 @@ const leveldown = require("leveldown");
 const probe = require("node-ffprobe");
 const path = require("path");
 const fs = require("fs");
+const Youtube = require("youtube-api");
+const util = require("./util");
 
 const UPDATE_INTERVAL = 5000;
 
+const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
+
 // to client:
-// sync.update { url: <url>, vtt: <subs>, pos: <pos in seconds>, state: (stopped|playing|paused) }
+// sync.update { url: <url>, vtt: <subs>, pos: <pos in seconds>, state: (stopped|playing|paused), type: (youtube|file) }
 
 var mediaInfo = {
 	url: null,
+	type: "file",
 	vtt: null,
 	duration: 0,
 	pos: 0,
@@ -22,6 +27,7 @@ function getSyncObject()
 {
 	return {
 		url: mediaInfo.url,
+		type: mediaInfo.type,
 		vtt: mediaInfo.vtt,
 		pos: mediaInfo.pos,
 		duration: mediaInfo.duration,
@@ -48,6 +54,57 @@ function runTick(io, db)
 	io.emit("sync.update", getSyncObject());
 
 	db.put("media:info", JSON.stringify(mediaInfo));
+}
+
+function handleYoutube(socket, msg, forceUpdate)
+{
+	var id = YOUTUBE_REGEX.exec(msg.file || "")[1];
+	Youtube.videos.list({ part: "contentDetails", id: id }, (err, data) => {
+		if(err)
+		{
+			return socket.emit("control.error", { msg: "youtube api error: " + err });
+		}
+		if(!data.items || !data.items[0] || !data.items[0].contentDetails)
+		{
+			return socket.emit("control.error", { msg: "youtube video not found" });
+		}
+
+		var duration = util.convertYoutubeTime(data.items[0].contentDetails.duration);
+		if(duration == 0)
+		{
+			return socket.emit("control.error", { msg: "invalid duration" });
+		}
+
+		mediaInfo.duration = duration;
+		mediaInfo.pos = 0;
+		mediaInfo.type = "youtube";
+		mediaInfo.url = id;
+		forceUpdate();
+	});
+}
+
+function handleFile(socket, msg, forceUpdate)
+{
+	var file = msg.file || "";
+	var filePath = path.join(nconf.get("data_folder"), file);
+	if(!fs.existsSync(filePath) || file.trim().length == 0)
+	{
+		return socket.emit("control.error", { msg: `Can't find file ${filePath}` });
+	}
+
+	probe(filePath, (err, probeData) => {
+		if(err) 
+		{
+			socket.emit("control.error", { msg: "ffprobe error: " + err });
+			return;
+		}
+
+		mediaInfo.type = "file";
+		mediaInfo.url = file;
+		mediaInfo.pos = 0;
+		mediaInfo.duration = probeData.format.duration;
+		forceUpdate();
+	});
 }
 
 // register listeners for control panel
@@ -84,24 +141,14 @@ function registerListeners(socket, nconf, forceUpdate)
 	// sets the url of the currently playing media
 	socket.on("control.set_url", (msg) => {
 		var file = msg.file || "";
-		var filePath = path.join(nconf.get("data_folder"), file);
-		if(!fs.existsSync(filePath) || file.trim().length == 0)
+		if(YOUTUBE_REGEX.test(file))
 		{
-			return socket.emit("control.error", { msg: `Can't find file ${filePath}` });
+			handleYoutube(socket, msg, forceUpdate);
 		}
-
-		probe(filePath, (err, probeData) => {
-			if(err) 
-			{
-				socket.emit("control.error", { msg: "ffprobe error: " + err });
-				return;
-			}
-
-			mediaInfo.url = file;
-			mediaInfo.pos = 0;
-			mediaInfo.duration = probeData.format.duration;
-			forceUpdate();
-		});
+		else
+		{
+			handleFile(socket, msg, forceUpdate);
+		}
 	});
 
 	// sets the vtt file of the currently playing media
@@ -128,6 +175,10 @@ function registerListeners(socket, nconf, forceUpdate)
 
 module.exports = function(io, nconf, cb) {
 	var db = levelup(leveldown("./state"));
+	Youtube.authenticate({
+		type: "key",
+		key: nconf.get("youtube_api_key")
+	});
 	db.get("media:info", (err, value) => {
 		if(err && !err.notFound)
 		{
