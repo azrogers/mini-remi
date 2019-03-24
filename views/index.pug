@@ -34,7 +34,8 @@ block body
 						button.chat-submit Send
 					else
 						a.chat-auth-notice(href=root + "auth/login") Please log in with Discord to chat.
-	div.chat-toggle
-		i.fas.fa-comment-slash.chat-toggle-icon
+	if chat
+		div.chat-toggle
+			i.fas.fa-comment-slash.chat-toggle-icon
 	script(src="/js/player.js")
 	script(src="/js/chat.js")

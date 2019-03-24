@@ -5,6 +5,7 @@ A very simple rabb.it alternative. I didn't expect to keep working on this.
 ## Features
 
 * A single room. All you need.
+* Chat.
 * Synchronized playback of HTML5 videos hosted on your server or YouTube videos.
 * SRT subtitle support.
 

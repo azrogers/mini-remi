@@ -224,7 +224,7 @@ module.exports = function(io, nconf, cb) {
 
 		io.on("connection", (socket) => {
 			runTick(io, db);
-			registerListeners(socket, nconf, db, () => runTick(io, db));
+			registerListeners(socket, nconf, () => runTick(io, db));
 		});
 
 		setInterval(() => runTick(io, db), UPDATE_INTERVAL);
