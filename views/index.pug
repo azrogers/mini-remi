@@ -1,10 +1,40 @@
 extends layout
 block head
 	script(src="/js/libs/plyr.polyfilled.min.js")
+	script(src="/js/libs/handlebars.min-v4.1.1.js")
+	script(src="/js/libs/autolink-min.js")
 	link(href="/plyr.css", rel="stylesheet")
-	link(href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",rel="stylesheet")
+	link(href="https://use.fontawesome.com/releases/v5.8.1/css/solid.css",rel="stylesheet")
+	link(href="https://use.fontawesome.com/releases/v5.8.1/css/fontawesome.css",rel="stylesheet")
 	link(href="/style.css",rel="stylesheet")
+	script#message-template(type="text/x-handlebars-template").
+		<div class="chat-message">
+			<span class="chat-author" style="color: {{color}}">{{name}}</span><span class="chat-body">: {{{body}}}</span>
+		</div>
+	script#me-template(type="text/x-handlebars-template")
+		<div class="chat-message">
+			<span class="chat-me" style="color: {{color}}">{{name}} {{{body}}}</span>
+		</div>
+	script#sys-template(type="text/x-handlebars-template")
+		<div class="chat-message">
+			<span class="chat-sys">{{body}}</span>
+		</div>
 block body
 	script= "var baseUrl = '" + config.get("data_url") + "';"
-	video.sync-video(id="sync-video")
+	div.page
+		div.video
+			video.sync-video(id="sync-video")
+		if chat
+			div.chat
+				div.chat-header
+				div.chat-messages
+				div.chat-box
+					if auth
+						input.chat-input(type="text",placeholder="a very good message",maxlength=2000)
+						button.chat-submit Send
+					else
+						a.chat-auth-notice(href=root + "auth/login") Please log in with Discord to chat.
+	div.chat-toggle
+		i.fas.fa-comment-slash.chat-toggle-icon
 	script(src="/js/player.js")
+	script(src="/js/chat.js")

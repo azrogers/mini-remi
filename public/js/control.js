@@ -76,6 +76,11 @@ socket.on("sync.update", (msg) => {
 	updateUI();
 });
 
+// chat state update
+socket.on("control.chat_state", (msg) => {
+	$(".control-togglechat").text(msg.enabled ? "Disable Chat" : "Enable Chat");
+});
+
 // set the mp4
 $(".control-seturl").click(() => {
 	var url = $(".control-url-input").val();
@@ -135,6 +140,10 @@ $(".control-stop").click(() => {
 // send pause play update
 $(".control-pauseplay").click(() => {
 	socket.emit("control.state", { state: mediaInfo.state == "paused" ? "playing" : "paused" });
+});
+
+$(".control-togglechat").click(() => {
+	socket.emit("control.toggle_chat");
 });
 
 setInterval(updateUI, 250);

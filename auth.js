@@ -9,17 +9,25 @@ module.exports = function(nconf)
 
 	var authUrl = nconf.get("auth_url") + "auth?appid=" + nconf.get("auth_app_id");
 
-	router.get("/login", (req, res) => res.redirect(authUrl));
+	router.get("/login", (req, res) => {
+		if(req.query.after)
+		{
+			req.session.afterLogin = req.query.after;
+		}
+
+		res.redirect(authUrl);
+	});
+
 	router.get("/callback", (req, res) => {
 		var userkey = req.query.userkey;
 		if(userkey == null)
 		{
-			res.send("no userkey provided");
+			res.render("error", { msg: "no userkey provided" });
 			return;
 		}
 		else if(!HEX_REGEX.test(userkey))
 		{
-			res.send("invalid userkey format");
+			res.render("error", { msg: "invalid userkey format" });
 			return;
 		}
 
@@ -27,7 +35,7 @@ module.exports = function(nconf)
 			if(err)
 			{
 				console.log(err);
-				res.send("auth error");
+				res.render("error", { msg: "auth error" });
 				return;
 			}
 
@@ -35,15 +43,21 @@ module.exports = function(nconf)
 			if(info.valid)
 			{
 				req.session.discordId = info.data.id;
-				res.redirect(nconf.get("root_url") + "control");
+				res.redirect(nconf.get("root_url") + (req.session.afterLogin || ""));
 			}
 			else
 			{
-				res.send("invalid user key - already used?");
+				res.render("error", { msg: "invalid user key - already used?" });
 				return;
 			}
 		});
 	});
+
+	router.get("/logout", (req, res) => res.render("logout"));
+	router.post("/logout", (req, res) => {
+		req.session.discordId = null;
+		res.redirect(nconf.get("root_url"));
+	})
 
 	return router;
 }

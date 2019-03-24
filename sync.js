@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const Youtube = require("youtube-api");
 const util = require("./util");
+const chat = require("./chat");
 
 const UPDATE_INTERVAL = 5000;
 
@@ -112,13 +113,16 @@ function registerListeners(socket, nconf, forceUpdate)
 {
 	var session = socket.handshake.session;
 	var isAdmin = session.discordId == null ? false : nconf.get("admins").indexOf(session.discordId) != -1;
+	
+	chat.register(socket, nconf, session.discordId, isAdmin);
+	socket.emit("control.chat_state", { enabled: nconf.get("chat_enabled") });
 
 	function registerListener(name, cb)
 	{
 		socket.on(name, (msg) => {
 			if(!isAdmin)
 			{
-				socket.emit("control.error", { msg: "Not logged in. Refresh the page. "});
+				socket.emit("control.error", { msg: "Not logged in. Refresh the page."});
 				return;
 			}
 
@@ -195,6 +199,14 @@ function registerListeners(socket, nconf, forceUpdate)
 		mediaInfo.lastUpdate = Date.now();
 		forceUpdate();
 	});
+
+	registerListener("control.toggle_chat", (msg) => {
+		if(!isAdmin) return;
+
+		nconf.set("chat_enabled", !nconf.get("chat_enabled"));
+		socket.emit("control.chat_state", { enabled: nconf.get("chat_enabled") });
+		socket.broadcast.emit("control.chat_state", { enabled: nconf.get("chat_enabled") });
+	});
 }
 
 module.exports = function(io, nconf, cb) {
@@ -212,7 +224,7 @@ module.exports = function(io, nconf, cb) {
 
 		io.on("connection", (socket) => {
 			runTick(io, db);
-			registerListeners(socket, nconf, () => runTick(io, db));
+			registerListeners(socket, nconf, db, () => runTick(io, db));
 		});
 
 		setInterval(() => runTick(io, db), UPDATE_INTERVAL);
@@ -222,6 +234,8 @@ module.exports = function(io, nconf, cb) {
 			mediaInfo = JSON.parse(value);
 		}
 
-		return cb(null);
+		chat.initializeBans(db, (err) => {
+			return cb(err);
+		});
 	});
 }

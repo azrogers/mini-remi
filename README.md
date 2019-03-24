@@ -28,6 +28,8 @@ Your config file should look like this:
 	// the app id for the gateway
 	"auth_app_id": "mini-remi",
 	// an array of discord user ids that are allowed to access the control panel
-	"admins": ["discord user id"]
+	"admins": ["discord user id"],
+	// is chat enabled? can be toggled from the control panel
+	"chat_enabled": true
 }
 ```

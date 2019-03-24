@@ -50,14 +50,14 @@ app.get("/control", (req, res) => {
 	// not logged in
 	if(!req.session.discordId)
 	{
-		res.redirect(nconf.get("root_url") + "auth/login");
+		res.redirect(nconf.get("root_url") + "auth/login?after=control");
 		return;
 	}
 
 	// not admin
 	if(nconf.get("admins").indexOf(req.session.discordId) == -1)
 	{
-		res.send("not allowed");
+		res.render("error", { msg: "not allowed" });
 		return;
 	}
 
@@ -65,7 +65,12 @@ app.get("/control", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-	res.render("index", { config: nconf });
+	res.render("index", { 
+		config: nconf, 
+		auth: req.session.discordId != null, 
+		root: nconf.get("root_url"),
+		chat: nconf.get("chat_enabled")
+	});
 });
 
 sync(io, nconf, (err) => {

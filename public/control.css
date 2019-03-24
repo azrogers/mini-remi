@@ -1,7 +1,37 @@
 body
 {
-	color: #333;
+	background: #222222;
+	color: #eeeeee;
 	font-family: "Open Sans", "Trebuchet MS", sans-serif;
 	width: 50%;
 	margin: auto;
+}
+
+button,input[type=button],input[type=submit]
+{
+	background: white;
+	border: 0;
+	outline: 0;
+	height: 25px;
+}
+
+button:hover,input[type=button]:hover,input[type=submit]:hover
+{
+	background: #dddddd;
+}
+
+input[type=text]
+{
+	background: #333333;
+	color: #ffffff;
+	border: 1px solid white;
+	height: 25px;
+	padding: 5px;
+	box-sizing: border-box;
+	outline: 0;
+}
+
+.control-buttons button
+{
+	margin-right: 5px;
 }
